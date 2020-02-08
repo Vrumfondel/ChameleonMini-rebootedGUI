@@ -25,6 +25,7 @@ namespace ChameleonMiniGUI
 
     public partial class frm_main : Form
     {
+        #region Fields
         private SerialPort _comport;
         private string[] _modesArray;
         private string[] _lbuttonModesArray;
@@ -54,6 +55,13 @@ namespace ChameleonMiniGUI
         private DeviceType _CurrentDevType = DeviceType.RevG;
         private int _active_selected_slot;
 
+        public string SoftwareVersion => $"Chameleon Mini GUI - {Default.version} - Iceman Edition 冰人";
+
+        private List<string> AvailableCommands = new List<string>();
+        private List<string> ErrorResponses = new List<string>(new string[] { "200:UNKNOWN COMMAND", "201:INVALID COMMAND USAGE", "202:INVALID PARAMETER", "203:TIMEOUT" });
+        #endregion
+
+        #region Properties
         private double ByteWidth
         {
             get
@@ -75,6 +83,7 @@ namespace ChameleonMiniGUI
                 return width;
             }
         }
+
         public string FirmwareVersion
         {
             get { return _firmwareVersion; }
@@ -85,17 +94,23 @@ namespace ChameleonMiniGUI
             }
         }
 
-        public string SoftwareVersion => $"Chameleon Mini GUI - {Default.version} - Iceman Edition 冰人";
-
-        private List<string> AvailableCommands { get; set; }
+        // Attempt to reduce flickering of the controls
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle |= 0x02000000;  // Turn on WS_EX_COMPOSITED
+                return cp;
+            }
+        }
+        #endregion
 
         public frm_main()
         {
             InitializeComponent();
 
             this.Text = SoftwareVersion;
-
-            AvailableCommands = new List<string>();
         }
 
         #region Event Handlers
@@ -112,7 +127,7 @@ namespace ChameleonMiniGUI
             }
 
             // Select no tag slot
-            foreach (var cb in FindControls<CheckBox>(Controls, "checkBox"))
+            foreach (var cb in FindControls<CheckBox>(tpOperation.Controls, "checkBox"))
             {
                 cb.Checked = false;
             }
@@ -121,78 +136,6 @@ namespace ChameleonMiniGUI
             InitTimer();
 
             SplashScreen.CloseForm();
-        }
-
-        private void InitHelp()
-        {
-            tfSerialHelp.AvailableCommands = AvailableCommands;
-            tfSerialHelp.SetList();
-        }
-
-        private void LoadSettings()
-        {
-            // Set the default download path if not empty and exists
-            if (!string.IsNullOrEmpty(Default.DownloadDumpPath))
-            {
-                if (Directory.Exists(Default.DownloadDumpPath))
-                {
-                    txt_defaultdownload.Text = Default.DownloadDumpPath;
-                } // else create folder?
-            }
-
-            // Set the keep alive options
-            chk_keepalive.Checked = Default.EnableKeepAlive;
-            if (Default.KeepAliveInterval > 0)
-            {
-                txt_interval.Text = Default.KeepAliveInterval.ToString();
-            }
-            else
-            {
-                // set the default value
-                // should be a setting aswell
-                txt_interval.Text = "2000";
-            }
-
-            var ml = new MultiLanguage();
-            var languages = ml.GetLanguages();
-            if (languages.Any())
-            {
-                lockFlag = true;
-                bsLanguages.DataSource = languages;
-                cb_languages.DisplayMember = "Key";
-                cb_languages.ValueMember = "Value";
-                lockFlag = false;
-            }
-
-            // load prefered language
-            var lang = Default.Language.ToLowerInvariant();
-            if (!string.IsNullOrWhiteSpace(lang))
-            {
-                ml.LoadLanguage(this.Controls, lang);
-
-                // select lang in combobox
-                lockFlag = true;
-                foreach (KeyValuePair<string, string> i in cb_languages.Items)
-                {
-                    if (i.Key.ToLowerInvariant() == lang || i.Value.ToLowerInvariant() == lang)
-                    {
-                        cb_languages.SelectedItem = i;
-                        break;
-                    }
-                }
-                lockFlag = false;
-            }
-
-            var t = new Templating();
-            var templates = t.GetTemplates();
-            if (templates.Any())
-            {
-                lockFlag = true;
-                bsTemplates.DataSource = templates;
-                cb_templateA.DisplayMember = "Key";
-                cb_templateA.ValueMember = "Value";
-                lockFlag = false;
-            }
         }
 
         private void frm_main_FormClosed(object sender, FormClosedEventArgs e)
@@ -269,7 +212,7 @@ namespace ChameleonMiniGUI
             SaveActiveSlot();
 
             // Get all selected indices
-            foreach (var cb in FindControls<CheckBox>(Controls, "checkBox"))
+            foreach (var cb in FindControls<CheckBox>(tpOperation.Controls, "checkBox"))
             {
                 if (!cb.Checked) continue;
 
@@ -279,7 +222,7 @@ namespace ChameleonMiniGUI
                 SendCommandWithoutResult($"SETTING{_cmdExtension}=" + (tagslotIndex - _tagslotIndexOffset));
 
                 string selectedMode = string.Empty;
-                var mode = FindControls<ComboBox>(Controls, $"cb_mode{tagslotIndex}").FirstOrDefault();
+                var mode = FindControls<ComboBox>(tpOperation.Controls, $"cb_mode{tagslotIndex}").FirstOrDefault();
                 if (mode != null)
                 {
                     string actualMode = SendCommand($"CONFIG{_cmdExtension}?").ToString();
@@ -295,24 +238,24 @@ namespace ChameleonMiniGUI
                 {
                     case DeviceType.RevG:
                         {
-                            FindControls<ComboBox>(Controls, $"cb_Lbutton{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LBUTTON{_cmdExtension}={a.SelectedItem}"));
-                            FindControls<ComboBox>(Controls, $"cb_Lbuttonlong{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LBUTTON_LONG{_cmdExtension}={a.SelectedItem}"));
-                            FindControls<ComboBox>(Controls, $"cb_Rbutton{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"RBUTTON{_cmdExtension}={a.SelectedItem}"));
-                            FindControls<ComboBox>(Controls, $"cb_Rbuttonlong{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"RBUTTON_LONG{_cmdExtension}={a.SelectedItem}"));
-                            FindControls<ComboBox>(Controls, $"cb_ledgreen{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LEDGREEN{_cmdExtension}={a.SelectedItem}"));
-                            FindControls<ComboBox>(Controls, $"cb_ledred{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LEDRED{_cmdExtension}={a.SelectedItem}"));
+                            FindControls<ComboBox>(tpOperation.Controls, $"cb_Lbutton{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LBUTTON{_cmdExtension}={a.SelectedItem}"));
+                            FindControls<ComboBox>(tpOperation.Controls, $"cb_Lbuttonlong{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LBUTTON_LONG{_cmdExtension}={a.SelectedItem}"));
+                            FindControls<ComboBox>(tpOperation.Controls, $"cb_Rbutton{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"RBUTTON{_cmdExtension}={a.SelectedItem}"));
+                            FindControls<ComboBox>(tpOperation.Controls, $"cb_Rbuttonlong{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"RBUTTON_LONG{_cmdExtension}={a.SelectedItem}"));
+                            FindControls<ComboBox>(tpOperation.Controls, $"cb_ledgreen{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LEDGREEN{_cmdExtension}={a.SelectedItem}"));
+                            FindControls<ComboBox>(tpOperation.Controls, $"cb_ledred{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LEDRED{_cmdExtension}={a.SelectedItem}"));
                             break;
                         }
                     default:
                         {
-                            FindControls<ComboBox>(Controls, $"cb_Lbutton{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"BUTTON{_cmdExtension}={a.SelectedItem}"));
-                            FindControls<ComboBox>(Controls, $"cb_Lbuttonlong{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"BUTTON_LONG{_cmdExtension}={a.SelectedItem}"));
+                            FindControls<ComboBox>(tpOperation.Controls, $"cb_Lbutton{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"BUTTON{_cmdExtension}={a.SelectedItem}"));
+                            FindControls<ComboBox>(tpOperation.Controls, $"cb_Lbuttonlong{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"BUTTON_LONG{_cmdExtension}={a.SelectedItem}"));
                             break;
                         }
                 }
 
                 // Set the UID
-                var txtUid = FindControls<TextBox>(Controls, $"txt_uid{tagslotIndex}").FirstOrDefault();
+                var txtUid = FindControls<TextBox>(tpOperation.Controls, $"txt_uid{tagslotIndex}").FirstOrDefault();
                 if (txtUid != null)
                 {
                     string uid = txtUid.Text;
@@ -329,7 +272,7 @@ namespace ChameleonMiniGUI
                 var slotMemSize = SendCommand($"MEMSIZE{_cmdExtension}?").ToString();
                 if (!string.IsNullOrEmpty(slotMemSize) && !slotMemSize.StartsWith("202:"))
                 {
-                    FindControls<TextBox>(Controls, $"txt_size{tagslotIndex}").ForEach(a => a.Text = slotMemSize);
+                    FindControls<TextBox>(tpOperation.Controls, $"txt_size{tagslotIndex}").ForEach(a => a.Text = slotMemSize);
                 }
             }
             RestoreActiveSlot();
@@ -345,47 +288,116 @@ namespace ChameleonMiniGUI
 
         private void btn_exitboot_Click(object sender, EventArgs e)
         {
-            bool failed = true;
+            bool success = false;
+            bool found = false;
 
-            // Run the bootloader exe
-            try
+            ManagementObjectSearcher searcher =
+                    new ManagementObjectSearcher("SELECT * FROM Win32_PnPEntity where DeviceID like '%VID_03EB&PID_2FDE%' or DeviceID like '%VID_03EB&PID_204A%' or DeviceID like '%VID_03EB&PID_2FE4%'");
+
+            var queryCollection = searcher.Get();
+            if (queryCollection != null && queryCollection.Count > 0)
             {
-                var bootloaderPath = ConfigurationManager.AppSettings["BOOTLOADER_PATH"];
-                var bootloaderFileName = ConfigurationManager.AppSettings["BOOTLOADER_EXE"];
-                var flashFileName = ConfigurationManager.AppSettings["FLASH_BINARY"];
-                var eepromFileName = ConfigurationManager.AppSettings["EEPROM_BINARY"];
+                var mo = queryCollection.OfType<ManagementObject>().FirstOrDefault();
 
-                var fullpath = Path.Combine(Application.StartupPath, bootloaderPath);
-
-                var flasher = Path.Combine(fullpath, bootloaderFileName);
-                var firmware = Path.Combine(fullpath, flashFileName);
-                var eeprom = Path.Combine(fullpath, eepromFileName);
-
-                if (File.Exists(flasher) && File.Exists(firmware) && File.Exists(eeprom))
+                if (mo != null)
                 {
-                    var ps = new ProcessStartInfo
+                    var deviceName = mo["Name"].ToString().ToLower();
+                    var deviceID = mo["DeviceID"].ToString().ToLower();
+                    if (deviceName.Equals("atxmega128a4u") && (deviceID.Contains("vid_03eb&pid_2fde") || deviceID.Contains("vid_03eb&pid_204a")))
                     {
-                        UseShellExecute = true,
-                        WorkingDirectory = fullpath,
-                        FileName = flasher
-                    };
-                    Start(ps);
-                    failed = false;
+                        // RevG
+                        found = true;
+                        try
+                        {
+                            var extrasPath = ConfigurationManager.AppSettings["BOOTLOADER_PATH"];
+                            var avrdudeFileName = ConfigurationManager.AppSettings["AVRDUDE_EXE"];
+                            var flashFileName = ConfigurationManager.AppSettings["REVG_FLASH_HEX"];
+                            var eepromFileName = ConfigurationManager.AppSettings["REVG_EEPROM_HEX"];
+
+                            var fullpath = Path.Combine(Application.StartupPath, extrasPath);
+
+                            var flasher = Path.Combine(fullpath, avrdudeFileName);
+                            var firmware = Path.Combine(fullpath, flashFileName);
+                            var eeprom = Path.Combine(fullpath, eepromFileName);
+
+                            if (File.Exists(flasher) && File.Exists(firmware) && File.Exists(eeprom))
+                            {
+                                var ps = new ProcessStartInfo
+                                {
+                                    UseShellExecute = true,
+                                    WorkingDirectory = fullpath,
+                                    FileName = flasher,
+                                    Arguments = "-c flip2 -p ATXMega128A4U -B 60 -P usb -U application:w:" + flashFileName + ":i -U eeprom:w:" + eepromFileName + ":i"
+                                };
+                                Start(ps);
+                                success = true;
+                            }
+                            else
+                            {
+                                txt_output.AppendText("[!] Firmware flashing failed: Unable to find all the required files to flash the firmware");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            //
+                            Console.WriteLine(ex.Message);
+                        }
+                    }
+                    else if (deviceName.Equals("atxmega32a4u") && deviceID.Contains("vid_03eb&pid_2fe4"))
+                    {
+                        // RevE rebooted
+                        found = true;
+                        try
+                        {
+                            // Run the bootloader exe
+
+                            var bootloaderPath = ConfigurationManager.AppSettings["BOOTLOADER_PATH"];
+                            var bootloaderFileName = ConfigurationManager.AppSettings["BOOTLOADER_EXE"];
+                            var flashFileName = ConfigurationManager.AppSettings["FLASH_BINARY"];
+                            var eepromFileName = ConfigurationManager.AppSettings["EEPROM_BINARY"];
+
+                            var fullpath = Path.Combine(Application.StartupPath, bootloaderPath);
+
+                            var flasher = Path.Combine(fullpath, bootloaderFileName);
+                            var firmware = Path.Combine(fullpath, flashFileName);
+                            var eeprom = Path.Combine(fullpath, eepromFileName);
+
+                            if (File.Exists(flasher) && File.Exists(firmware) && File.Exists(eeprom))
+                            {
+                                var ps = new ProcessStartInfo
+                                {
+                                    UseShellExecute = true,
+                                    WorkingDirectory = fullpath,
+                                    FileName = flasher
+                                };
+                                Start(ps);
+                                success = true;
+                            }
+                            else
+                            {
+                                txt_output.AppendText("[!] Firmware flashing failed: Unable to find all the required files to flash the firmware");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            //
+                            Console.WriteLine(ex.Message);
+                        }
+                    }
                 }
-                else
-                {
-                    MessageBox.Show("Unable to find all the required files to exit the boot mode", "Exit Boot Mode failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                //
-                Console.WriteLine(ex.Message);
             }
 
-            if (failed)
+            if (success)
             {
-                MessageBox.Show("Unable to exit the bootloader mode", "Exit Boot Mode failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txt_output.AppendText("[+] Firmware flashed successfully");
+            }
+            else
+            {
+                if (!found)
+                {
+                    txt_output.AppendText("[!] Firmware flashing failed: Unable to find a ChameleonMini device. Maybe not in bootloader mode?");
+                }
+                MessageBox.Show("Unable to flash the firmware. Check the log output for more information.", "Firmware flashing failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -394,20 +406,20 @@ namespace ChameleonMiniGUI
             this.Cursor = Cursors.WaitCursor;
             SaveActiveSlot();
 
-            foreach (var cb in FindControls<CheckBox>(Controls, "checkBox"))
+            // Open dialog
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                if (!cb.Checked) continue;
+                var dumpFilename = openFileDialog1.FileName;
 
-                var tagslotIndex = int.Parse(cb.Name.Substring(cb.Name.Length - 1));
-                if (tagslotIndex <= 0) continue;
-
-                // select the corresponding slot
-                SendCommandWithoutResult($"SETTING{_cmdExtension}={tagslotIndex - _tagslotIndexOffset}");
-
-                // Open dialog
-                if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                foreach (var cb in FindControls<CheckBox>(tpOperation.Controls, "checkBox"))
                 {
-                    var dumpFilename = openFileDialog1.FileName;
+                    if (!cb.Checked) continue;
+
+                    var tagslotIndex = int.Parse(cb.Name.Substring(cb.Name.Length - 1));
+                    if (tagslotIndex <= 0) continue;
+
+                    // select the corresponding slot
+                    SendCommandWithoutResult($"SETTING{_cmdExtension}={tagslotIndex - _tagslotIndexOffset}");
 
                     // Load the dump
                     UploadDump(dumpFilename);
@@ -416,7 +428,6 @@ namespace ChameleonMiniGUI
                     RefreshSlot(tagslotIndex, false);
                 }
 
-                break; // We can only upload a single dump at a time
             }
 
             RestoreActiveSlot();
@@ -440,7 +451,7 @@ namespace ChameleonMiniGUI
             }
 
             // Get all selected indices
-            foreach (var cb in FindControls<CheckBox>(Controls, "checkBox"))
+            foreach (var cb in FindControls<CheckBox>(tpOperation.Controls, "checkBox"))
             {
                 if (!cb.Checked) continue;
 
@@ -450,7 +461,7 @@ namespace ChameleonMiniGUI
                 // select the corresponding slot
                 SendCommandWithoutResult($"SETTING{_cmdExtension}={tagslotIndex - _tagslotIndexOffset}");
 
-                if (btn_upload.Enabled)
+                if (btn_setactive.Enabled)
                 {
                     // Only one tag slot is selected, show the save dialog
 
@@ -492,7 +503,10 @@ namespace ChameleonMiniGUI
 
                     if (!string.IsNullOrEmpty(uid))
                     {
-                        var varFullDownloadPath = Path.Combine(downloadPath, uid + ".bin");
+                        var varFullDownloadPath = Path.Combine(downloadPath, $"{uid}.bin");
+                        var dupeCount = 0;
+                        while (File.Exists(varFullDownloadPath))
+                            varFullDownloadPath = Path.Combine(downloadPath, $"{uid}_{++dupeCount}.bin");
                         DownloadAndSaveDump(varFullDownloadPath);
                     }
                 }
@@ -508,7 +522,7 @@ namespace ChameleonMiniGUI
             SaveActiveSlot();
 
             // Get all selected indices
-            var results = FindControls<CheckBox>(Controls, "checkBox")
+            var results = FindControls<CheckBox>(tpOperation.Controls, "checkBox")
                 .Where(cb => cb.Checked)
                 .Select(cb =>
                 {
@@ -544,7 +558,7 @@ namespace ChameleonMiniGUI
 
             // Get all selected checkboxes
             List<CheckBox> selectedCheckBoxes = new List<CheckBox>();
-            List<CheckBox> allSlotsCheckBoxes = FindControls<CheckBox>(Controls, "checkBox");
+            List<CheckBox> allSlotsCheckBoxes = FindControls<CheckBox>(tpOperation.Controls, "checkBox");
             foreach (var cb in allSlotsCheckBoxes)
             {
                 if(cb.Checked)
@@ -576,13 +590,13 @@ namespace ChameleonMiniGUI
                     // For RevG, we manually set default values
                     if (_CurrentDevType == DeviceType.RevG)
                     {
-                        FindControls<ComboBox>(Controls, $"cb_mode{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"CONFIG{_cmdExtension}=CLOSED"));
-                        FindControls<ComboBox>(Controls, $"cb_Lbutton{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LBUTTON{_cmdExtension}={a.Items[0]}"));
-                        FindControls<ComboBox>(Controls, $"cb_Lbuttonlong{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LBUTTON_LONG{_cmdExtension}={a.Items[0]}"));
-                        FindControls<ComboBox>(Controls, $"cb_Rbutton{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"RBUTTON{_cmdExtension}={a.Items[0]}"));
-                        FindControls<ComboBox>(Controls, $"cb_Rbuttonlong{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"RBUTTON_LONG{_cmdExtension}={a.Items[0]}"));
-                        FindControls<ComboBox>(Controls, $"cb_ledgreen{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LEDGREEN{_cmdExtension}={a.Items[0]}"));
-                        FindControls<ComboBox>(Controls, $"cb_ledred{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LEDRED{_cmdExtension}={a.Items[0]}"));
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_mode{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"CONFIG{_cmdExtension}=CLOSED"));
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_Lbutton{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LBUTTON{_cmdExtension}={a.Items[0]}"));
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_Lbuttonlong{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LBUTTON_LONG{_cmdExtension}={a.Items[0]}"));
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_Rbutton{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"RBUTTON{_cmdExtension}={a.Items[0]}"));
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_Rbuttonlong{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"RBUTTON_LONG{_cmdExtension}={a.Items[0]}"));
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_ledgreen{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LEDGREEN{_cmdExtension}={a.Items[0]}"));
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_ledred{tagslotIndex}").ForEach(a => SendCommandWithoutResult($"LEDRED{_cmdExtension}={a.Items[0]}"));
                     }
                     RefreshSlot(tagslotIndex, false);
                 }
@@ -596,7 +610,7 @@ namespace ChameleonMiniGUI
         {
             this.Cursor = Cursors.WaitCursor;
             // Get all selected indices
-            foreach (var cb in FindControls<CheckBox>(Controls, "checkBox"))
+            foreach (var cb in FindControls<CheckBox>(tpOperation.Controls, "checkBox"))
             {
                 if (!cb.Checked) continue;
 
@@ -611,7 +625,7 @@ namespace ChameleonMiniGUI
         private void btn_setactive_Click(object sender, EventArgs e)
         {
             this.Cursor = Cursors.WaitCursor;
-            foreach (var cb in FindControls<CheckBox>(Controls, "checkBox"))
+            foreach (var cb in FindControls<CheckBox>(tpOperation.Controls, "checkBox"))
             {
                 if (!cb.Checked) continue;
 
@@ -690,6 +704,8 @@ namespace ChameleonMiniGUI
                 btn_keycalc.Enabled = true;
                 btn_upload.Enabled = true;
                 btn_download.Enabled = true;
+                if (_CurrentDevType == DeviceType.RevG)
+                    btn_identify.Enabled = true;
             }
             else if (checkCount > 1)
             {
@@ -699,8 +715,9 @@ namespace ChameleonMiniGUI
                 btn_clear.Enabled = true;
                 btn_setactive.Enabled = false;
                 btn_keycalc.Enabled = true;
-                btn_upload.Enabled = false;
+                btn_upload.Enabled = true;
                 btn_download.Enabled = true;
+                btn_identify.Enabled = false;
             }
             else
             {
@@ -956,6 +973,12 @@ namespace ChameleonMiniGUI
 
         private void menuClear_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
+            if (e.ClickedItem.Name == "tsmi_selectall")
+            {
+                tbSerialOutput.Focus();
+                tbSerialOutput.SelectAll();
+            }
+
             if (e.ClickedItem.Name == "tsmi_copy")
             {
                 Clipboard.SetText(tbSerialOutput.Text);
@@ -996,14 +1019,13 @@ namespace ChameleonMiniGUI
             CloseFile(hexBox2);
         }
 
-        private void frm_main_Move(object sender, EventArgs e)
+        private void frm_main_Activated(object sender, EventArgs e)
         {
             GroupBoxEnhanced.RedrawGroupBoxDisplay(tpOperation);
         }
 
-        private void frm_main_Activated(object sender, EventArgs e)
+        private void frm_main_ResizeBegin(object sender, EventArgs e)
         {
-            GroupBoxEnhanced.RedrawGroupBoxDisplay(tpOperation);
         }
 
         private void frm_main_ResizeEnd(object sender, EventArgs e)
@@ -1019,8 +1041,10 @@ namespace ChameleonMiniGUI
             SendCommandWithoutResult($"CONFIG{_cmdExtension}=ISO14443A_READER");
 
             var s = SendCommandWithMultilineResponse($"IDENTIFY{_cmdExtension}").ToString();
-            txt_output.Text += $"{s}{Environment.NewLine}";
-
+            var lines = s.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach( var line in lines) {
+                txt_output.Text += $"[+] {line}{Environment.NewLine}";
+            }
             RestoreActiveSlot();
             this.Cursor = Cursors.Default;
         }
@@ -1067,9 +1091,89 @@ namespace ChameleonMiniGUI
                 }
             }
         }
+
+         private void txt_output_VisibleChanged(object sender, EventArgs e)
+        {
+            var tb = (TextBox) sender;
+            if (tb == null || !tb.Visible) return;
+            
+            tb.SelectionStart = tb.TextLength;
+            tb.ScrollToCaret();
+        }  
         #endregion
 
         #region Helper methods
+        private void InitHelp()
+        {
+            tfSerialHelp.AvailableCommands = AvailableCommands;
+            tfSerialHelp.SetList();
+        }
+
+        private void LoadSettings()
+        {
+            // Set the default download path if not empty and exists
+            if (!string.IsNullOrEmpty(Default.DownloadDumpPath))
+            {
+                if (Directory.Exists(Default.DownloadDumpPath))
+                {
+                    txt_defaultdownload.Text = Default.DownloadDumpPath;
+                } // else create folder?
+            }
+
+            // Set the keep alive options
+            chk_keepalive.Checked = Default.EnableKeepAlive;
+            if (Default.KeepAliveInterval > 0)
+            {
+                txt_interval.Text = Default.KeepAliveInterval.ToString();
+            }
+            else
+            {
+                // set the default value
+                // should be a setting aswell
+                txt_interval.Text = "10000";
+            }
+
+            var ml = new MultiLanguage();
+            var languages = ml.GetLanguages();
+            if (languages.Any())
+            {
+                lockFlag = true;
+                bsLanguages.DataSource = languages;
+                cb_languages.DisplayMember = "Key";
+                cb_languages.ValueMember = "Value";
+                lockFlag = false;
+            }
+
+            // load prefered language
+            var lang = Default.Language.ToLowerInvariant();
+            if (!string.IsNullOrWhiteSpace(lang))
+            {
+                ml.LoadLanguage(this.Controls, lang);
+
+                // select lang in combobox
+                lockFlag = true;
+                foreach (KeyValuePair<string, string> i in cb_languages.Items)
+                {
+                    if (i.Key.ToLowerInvariant() == lang || i.Value.ToLowerInvariant() == lang)
+                    {
+                        cb_languages.SelectedItem = i;
+                        break;
+                    }
+                }
+                lockFlag = false;
+            }
+
+            var t = new Templating();
+            var templates = t.GetTemplates();
+            if (templates.Any())
+            {
+                lockFlag = true;
+                bsTemplates.DataSource = templates;
+                cb_templateA.DisplayMember = "Key";
+                cb_templateA.ValueMember = "Value";
+                lockFlag = false;
+            }
+        }
 
         private async void Send(string cmd)
         {
@@ -1139,7 +1243,7 @@ namespace ChameleonMiniGUI
 
         private void SetCheckBox(bool value)
         {
-            foreach (var cb in FindControls<CheckBox>(Controls, "checkBox"))
+            foreach (var cb in FindControls<CheckBox>(tpOperation.Controls, "checkBox"))
             {
                 cb.Checked = value;
             }
@@ -1147,7 +1251,7 @@ namespace ChameleonMiniGUI
 
         private int GetNumberOfChecked()
         {
-            return FindControls<CheckBox>(Controls, "checkBox").Count(cb => cb.Checked);
+            return FindControls<CheckBox>(tpOperation.Controls, "checkBox").Count(cb => cb.Checked);
         }
 
         private void DeviceDisconnected()
@@ -1168,7 +1272,7 @@ namespace ChameleonMiniGUI
                 _comport = null;
             }
 
-            this.Text = $"{SoftwareVersion} ---> Device disconnected";
+            this.Text = $"{SoftwareVersion}";
 
             pb_device.Image = pb_device.InitialImage;
             FirmwareVersion = string.Empty;
@@ -1179,7 +1283,7 @@ namespace ChameleonMiniGUI
             txt_constatus.SelectionStart = 0;
 
             // Disable all tag slots and don't select any tag slot
-            foreach (var cb in FindControls<CheckBox>(Controls, "checkBox"))
+            foreach (var cb in FindControls<CheckBox>(tpOperation.Controls, "checkBox"))
             {
                 cb.Enabled = false;
                 cb.Checked = false;
@@ -1223,8 +1327,10 @@ namespace ChameleonMiniGUI
 
             DisplayText();
 
+            SuspendUpdate.Suspend(tpOperation);
+
             // Enable all tag slots but don't select any tag slot
-            foreach (var cb in FindControls<CheckBox>(Controls, "checkBox"))
+            foreach (var cb in FindControls<CheckBox>(tpOperation.Controls, "checkBox"))
             {
                 cb.Enabled = true;
                 cb.Checked = false;
@@ -1265,6 +1371,8 @@ namespace ChameleonMiniGUI
             tbSerialCmd.Enabled = true;
 
             GetAvailableCommands();
+
+            SuspendUpdate.Resume(tpOperation);
             this.Cursor = Cursors.Default;
         }
 
@@ -1272,7 +1380,7 @@ namespace ChameleonMiniGUI
         {
             this.Cursor = Cursors.WaitCursor;
             pb_device.Image = pb_device.InitialImage;
-            txt_output.Text += $"{Environment.NewLine}"; // add empty line into log output
+            txt_output.AppendText($"{Environment.NewLine}"); // add empty line into log output
 
             var searcher = new ManagementObjectSearcher("select Name, DeviceID, PNPDeviceID from Win32_SerialPort where PNPDeviceID like '%VID_03EB&PID_2044%' or PNPDeviceID like '%VID_16D0&PID_04B2%'");
 
@@ -1292,16 +1400,17 @@ namespace ChameleonMiniGUI
                 try
                 {
                     var name = obj["Name"].ToString();
-                    txt_output.Text += $"[=] Connecting to {name} at {comPortStr}{Environment.NewLine}";
+                    txt_output.AppendText($"[=] Connecting to {name} at {comPortStr}{Environment.NewLine}");
                     _comport.Open();
                 }
                 catch (Exception)
                 {
-                    txt_output.Text += $"[!] Failed {comPortStr}{Environment.NewLine}";
+                    txt_output.AppendText($"[!] Failed {comPortStr}{Environment.NewLine}");
                 }
 
                 if (_comport.IsOpen)
                 {
+                    tpOperation.SuspendLayout();
                     if (pnpId.Contains("VID_03EB&PID_2044"))
                     {
                         // revE
@@ -1309,7 +1418,9 @@ namespace ChameleonMiniGUI
                         pb_device.Image = (Bitmap)Properties.Resources.ResourceManager.GetObject("chamRevE");
                         _CurrentDevType = DeviceType.RevE;
                         _tagslotIndexOffset = 1;
+                        tpOperation.Hide();
                         ConfigHMIForRevE();
+                        tpOperation.Show();
                     }
 
                     else if (pnpId.Contains("VID_16D0&PID_04B2"))
@@ -1319,16 +1430,18 @@ namespace ChameleonMiniGUI
                         pb_device.Image = (Bitmap)Properties.Resources.ResourceManager.GetObject("chamRevG1");
                         _CurrentDevType = DeviceType.RevG;
                         _tagslotIndexOffset = 0;
+                        tpOperation.Hide();
                         ConfigHMIForRevG();
+                        tpOperation.Show();
                     }
-
+                    tpOperation.ResumeLayout(true);
 
                     // try without the "MY" extension first
                     FirmwareVersion = SendCommand("VERSION?").ToString();
                     if (!string.IsNullOrEmpty(_firmwareVersion) && _firmwareVersion.Contains("Chameleon"))
                     {
                         _cmdExtension = string.Empty;
-                        txt_output.Text += $"[+] Success, found Chameleon Mini device on '{comPortStr}' with {_deviceIdentification} installed{Environment.NewLine}";
+                        txt_output.AppendText($"[+] Success, found Chameleon Mini device on '{comPortStr}' with {_deviceIdentification} installed{Environment.NewLine}");
                         _current_comport = comPortStr;
                         this.Cursor = Cursors.Default;
                         return;
@@ -1338,7 +1451,7 @@ namespace ChameleonMiniGUI
                     if (!string.IsNullOrEmpty(_firmwareVersion) && _firmwareVersion.Contains("Chameleon"))
                     {
                         _cmdExtension = "MY";
-                        txt_output.Text += $"[+] Success, found Chameleon Mini device on '{comPortStr}' with {_deviceIdentification} installed{Environment.NewLine}";
+                        txt_output.AppendText($"[+] Success, found Chameleon Mini device on '{comPortStr}' with {_deviceIdentification} installed{Environment.NewLine}");
                         _current_comport = comPortStr;
                         this.Cursor = Cursors.Default;
                         return;
@@ -1363,12 +1476,12 @@ namespace ChameleonMiniGUI
                 try
                 {
                     var name = obj["Name"].ToString();
-                    txt_output.Text += $"[=] Connecting to {name} at {comPortStr}{Environment.NewLine}";
+                    txt_output.AppendText($"[=] Connecting to {name} at {comPortStr}{Environment.NewLine}");
                     _comport.Open();
                 }
                 catch (Exception)
                 {
-                    txt_output.Text += $"[!] Failed {comPortStr}{Environment.NewLine}";
+                    txt_output.AppendText($"[!] Failed {comPortStr}{Environment.NewLine}");
                 }
 
                 if (!_comport.IsOpen) continue;
@@ -1383,7 +1496,7 @@ namespace ChameleonMiniGUI
                 {
                     _cmdExtension = string.Empty;
                     pb_device.Image = (Bitmap)Properties.Resources.ResourceManager.GetObject("chamRevG1");
-                    txt_output.Text += $"[+] Success, found Chameleon Mini device on '{comPortStr}' with {_deviceIdentification} installed{Environment.NewLine}";
+                    txt_output.AppendText($"[+] Success, found Chameleon Mini device on '{comPortStr}' with {_deviceIdentification} installed{Environment.NewLine}");
                     _current_comport = comPortStr;
                     _CurrentDevType = DeviceType.RevG;
                     ConfigHMIForRevG();
@@ -1396,7 +1509,7 @@ namespace ChameleonMiniGUI
                 {
                     _cmdExtension = "MY";
                     pb_device.Image = (Bitmap)Properties.Resources.ResourceManager.GetObject("chamRevE");
-                    txt_output.Text += $"[+] Success, found Chameleon Mini device on '{comPortStr}' with {_deviceIdentification} installed{Environment.NewLine}";
+                    txt_output.AppendText($"[+] Success, found Chameleon Mini device on '{comPortStr}' with {_deviceIdentification} installed{Environment.NewLine}");
                     _current_comport = comPortStr;
                     _CurrentDevType = DeviceType.RevE;
                     ConfigHMIForRevE();
@@ -1408,11 +1521,11 @@ namespace ChameleonMiniGUI
 
                 _comport.Close();
 
-                txt_output.Text += $"Didn't find a Chameleon on '{comPortStr}'{Environment.NewLine}";
+                txt_output.AppendText($"Didn't find a Chameleon on '{comPortStr}'{Environment.NewLine}");
             }
             _current_comport = string.Empty;
             this.Cursor = Cursors.Default;
-            txt_output.Text += $"Didn't find any Chameleon Mini device connected{Environment.NewLine}";
+            txt_output.AppendText($"Didn't find any Chameleon Mini device connected{Environment.NewLine}");
         }
 
         private bool SendCommandWithoutResult(string cmdText)
@@ -1436,7 +1549,7 @@ namespace ChameleonMiniGUI
                 {
                     string retCode = _comport.ReadLine();
                     // If we get an error
-                    if (!retCode.StartsWith("1"))
+                    if (ErrorResponses.Any(s => retCode.Contains(s)))
                     {
                         throw new Exception(cmdText + "returned: " + retCode.Replace("\r", ""));
                     }
@@ -1445,7 +1558,7 @@ namespace ChameleonMiniGUI
             catch (Exception ex)
             {
                 var msg = $"{Environment.NewLine}[!] {cmdText}: {ex.Message}{Environment.NewLine}";
-                txt_output.Text += msg;
+                txt_output.AppendText(msg);
                 return false;
             }
             finally
@@ -1497,7 +1610,7 @@ namespace ChameleonMiniGUI
                     catch(TimeoutException ex)
                     {
                         var msg = $"{Environment.NewLine}[!] {cmdText}: {ex.Message}{Environment.NewLine}";
-                        txt_output.Text += msg;
+                        txt_output.AppendText(msg);
                     }
                     
                     return read_response_line.Replace("\r", "");
@@ -1594,6 +1707,11 @@ namespace ChameleonMiniGUI
                     hex.Append($"{Environment.NewLine}");
                     var counter = 0;
 
+                    if (cmdText.Contains($"LOGDOWNLOAD{_cmdExtension}"))
+                    {
+                        return Log.LogEntryUtils.ParseDownloadedLog(result);
+                    }
+
                     foreach (var b in result)
                     {
                         hex.AppendFormat("{0:x2} ", b);
@@ -1613,7 +1731,7 @@ namespace ChameleonMiniGUI
             catch (Exception ex)
             {
                 var msg = $"{Environment.NewLine}[!] {ex.Message}{Environment.NewLine}";
-                txt_output.Text += msg;
+                txt_output.AppendText(msg);
                 return string.Empty;
             }
         }
@@ -1638,7 +1756,7 @@ namespace ChameleonMiniGUI
 
         private void RefreshSlot(int slotIndex, bool doSaveActive = true)
         {
-            if(doSaveActive) SaveActiveSlot();
+            if (doSaveActive) SaveActiveSlot();
 
             //SETTINGMY=i
             SendCommandWithoutResult($"SETTING{_cmdExtension}={slotIndex - _tagslotIndexOffset}");
@@ -1652,7 +1770,7 @@ namespace ChameleonMiniGUI
             if (!string.IsNullOrWhiteSpace(slotUid))
             {
                 // set the textbox value of the i+1 txt_uid
-                var tbs = FindControls<TextBox>(Controls, $"txt_uid{slotIndex}");
+                var tbs = FindControls<TextBox>(tpOperation.Controls, $"txt_uid{slotIndex}");
                 foreach (var box in tbs)
                 {
                     box.Text = slotUid;
@@ -1664,7 +1782,7 @@ namespace ChameleonMiniGUI
             if (!string.IsNullOrEmpty(slotMemSize))
             {
                 // set the textbox value of the i+1 txt_size
-                var txtMemSize = FindControls<TextBox>(Controls, $"txt_size{slotIndex}");
+                var txtMemSize = FindControls<TextBox>(tpOperation.Controls, $"txt_size{slotIndex}");
                 foreach (var box in txtMemSize)
                 {
                     box.Text = slotMemSize;
@@ -1679,47 +1797,47 @@ namespace ChameleonMiniGUI
                     var slotMode = SendCommand($"CONFIG{_cmdExtension}?").ToString();
                     if (IsModeValid(slotMode))
                     {
-                        FindControls<ComboBox>(Controls, $"cb_mode{slotIndex}").ForEach(box => box.SelectedItem = slotMode);
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_mode{slotIndex}").ForEach(box => box.SelectedItem = slotMode);
                     }
 
                     //BUTTONMY? -> RETURNS THE MODE OF THE BUTTON
                     var slotLButtonMode = SendCommand($"LBUTTON{_cmdExtension}?").ToString();
                     if (IsLButtonModeValid(slotLButtonMode))
                     {
-                        FindControls<ComboBox>(Controls, $"cb_lbutton{slotIndex}").ForEach(box => box.SelectedItem = slotLButtonMode);
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_lbutton{slotIndex}").ForEach(box => box.SelectedItem = slotLButtonMode);
                     }
 
                     //BUTTON_LONGMY? -> RETURNS THE MODE OF THE BUTTON LONG
                     var slotLButtonLongMode = SendCommand($"LBUTTON_LONG{_cmdExtension}?").ToString();
                     if (IsLButtonLongModeValid(slotLButtonLongMode))
                     {
-                        FindControls<ComboBox>(Controls, $"cb_lbuttonlong{slotIndex}").ForEach(box => box.SelectedItem = slotLButtonLongMode);
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_lbuttonlong{slotIndex}").ForEach(box => box.SelectedItem = slotLButtonLongMode);
                     }
 
                     //BUTTONMY? -> RETURNS THE MODE OF THE BUTTON
                     var slotRButtonMode = SendCommand($"RBUTTON{_cmdExtension}?").ToString();
                     if (IsRButtonModeValid(slotRButtonMode))
                     {
-                        FindControls<ComboBox>(Controls, $"cb_rbutton{slotIndex}").ForEach(box => box.SelectedItem = slotRButtonMode);
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_rbutton{slotIndex}").ForEach(box => box.SelectedItem = slotRButtonMode);
                     }
 
                     //BUTTON_LONGMY? -> RETURNS THE MODE OF THE BUTTON LONG
                     var slotRButtonLongMode = SendCommand($"RBUTTON_LONG{_cmdExtension}?").ToString();
                     if (IsRButtonLongModeValid(slotRButtonLongMode))
                     {
-                        FindControls<ComboBox>(Controls, $"cb_rbuttonlong{slotIndex + _tagslotIndexOffset}").ForEach(box => box.SelectedItem = slotRButtonLongMode);
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_rbuttonlong{slotIndex + _tagslotIndexOffset}").ForEach(box => box.SelectedItem = slotRButtonLongMode);
                     }
 
                     var slotGreen = SendCommand($"LEDGREEN{_cmdExtension}?").ToString();
                     if (IsLEDGreenModeValid(slotGreen))
                     {
-                        FindControls<ComboBox>(Controls, $"cb_ledgreen{slotIndex}").ForEach(box => box.SelectedItem = slotGreen);
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_ledgreen{slotIndex}").ForEach(box => box.SelectedItem = slotGreen);
                     }
 
                     var slotRed = SendCommand($"LEDRED{_cmdExtension}?").ToString();
                     if (IsLEDRedModeValid(slotRed))
                     {
-                        FindControls<ComboBox>(Controls, $"cb_ledred{slotIndex}").ForEach(box => box.SelectedItem = slotRed);
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_ledred{slotIndex}").ForEach(box => box.SelectedItem = slotRed);
                     }
                     break;
                 }
@@ -1730,7 +1848,7 @@ namespace ChameleonMiniGUI
                     if (IsModeValid(slotMode))
                     {
                         // set the combobox value of the i+1 cb_mode
-                        var cbMode = FindControls<ComboBox>(Controls, $"cb_mode{slotIndex}");
+                        var cbMode = FindControls<ComboBox>(tpOperation.Controls, $"cb_mode{slotIndex}");
                         foreach (var box in cbMode)
                         {
                             box.SelectedItem = slotMode;
@@ -1741,14 +1859,14 @@ namespace ChameleonMiniGUI
                     var slotLButtonMode = SendCommand($"BUTTON{_cmdExtension}?").ToString();
                     if (IsLButtonModeValid(slotLButtonMode))
                     {
-                        FindControls<ComboBox>(Controls, $"cb_lbutton{slotIndex}").ForEach(box => box.SelectedItem = slotLButtonMode);
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_lbutton{slotIndex}").ForEach(box => box.SelectedItem = slotLButtonMode);
                     }
 
                     //BUTTON_LONGMY? -> RETURNS THE MODE OF THE BUTTON LONG
                     var slotLButtonLongMode = SendCommand($"BUTTON_LONG{_cmdExtension}?").ToString();
                     if (IsLButtonModeValid(slotLButtonLongMode))
                     {
-                        FindControls<ComboBox>(Controls, $"cb_lbuttonlong{slotIndex}").ForEach(box => box.SelectedItem = slotLButtonLongMode);
+                        FindControls<ComboBox>(tpOperation.Controls, $"cb_lbuttonlong{slotIndex}").ForEach(box => box.SelectedItem = slotLButtonLongMode);
                     }
                     break;
                 }
@@ -1815,7 +1933,7 @@ namespace ChameleonMiniGUI
                 if (_modesArray.Any())
                 {
                     // populate all dropdowns
-                    foreach (var cb in FindControls<ComboBox>(Controls, "cb_mode"))
+                    foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_mode"))
                     {
                         cb.Items.Clear();
                         cb.Items.AddRange(_modesArray);
@@ -1830,7 +1948,7 @@ namespace ChameleonMiniGUI
             if (!_lbuttonModesArray.Any()) return;
 
             // populate all dropdowns
-            foreach (var cb in FindControls<ComboBox>(Controls, "cb_Lbutton"))
+            foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_Lbutton"))
             {
                 cb.Items.Clear();
                 cb.Items.AddRange(_lbuttonModesArray);
@@ -1844,7 +1962,7 @@ namespace ChameleonMiniGUI
             if (!_rbuttonModesArray.Any()) return;
 
             // populate all dropdowns
-            foreach (var cb in FindControls<ComboBox>(Controls, "cb_Rbutton"))
+            foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_Rbutton"))
             {
                 cb.Items.Clear();
                 cb.Items.AddRange(_rbuttonModesArray);
@@ -1857,7 +1975,7 @@ namespace ChameleonMiniGUI
             if (lbuttonLongModesStr.ToLower().StartsWith("200"))
             {
                 // disable all dropdowns
-                foreach (var cb in FindControls<ComboBox>(Controls, "cb_Lbuttonlong"))
+                foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_Lbuttonlong"))
                 {
                     cb.Items.Clear();
                     cb.Enabled = false;
@@ -1870,7 +1988,7 @@ namespace ChameleonMiniGUI
                 if (!_lbuttonLongModesArray.Any()) return;
 
                 // populate all dropdowns
-                foreach (var cb in FindControls<ComboBox>(Controls, "cb_lbuttonlong"))
+                foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_lbuttonlong"))
                 {
                     cb.Enabled = true;
                     cb.Items.Clear();
@@ -1884,7 +2002,7 @@ namespace ChameleonMiniGUI
                 if (rbuttonLongModesStr.ToLower().StartsWith("200"))
                 {
                     // disable all dropdowns
-                    foreach (var cb in FindControls<ComboBox>(Controls, "cb_rbuttonlong"))
+                    foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_rbuttonlong"))
                     {
                         cb.Items.Clear();
                         cb.Enabled = false;
@@ -1897,7 +2015,7 @@ namespace ChameleonMiniGUI
                     if (!_rbuttonLongModesArray.Any()) return;
 
                     // populate all dropdowns
-                    foreach (var cb in FindControls<ComboBox>(Controls, "cb_rbuttonlong"))
+                    foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_rbuttonlong"))
                     {
                         cb.Enabled = true;
                         cb.Items.Clear();
@@ -1914,7 +2032,7 @@ namespace ChameleonMiniGUI
             if (!_LEDGreenModesArray.Any()) return;
 
             // populate all dropdowns
-            foreach (var cb in FindControls<ComboBox>(Controls, "cb_ledgreen"))
+            foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_ledgreen"))
             {
                 cb.Items.Clear();
                 cb.Items.AddRange(_LEDGreenModesArray);
@@ -1928,7 +2046,7 @@ namespace ChameleonMiniGUI
             if (!_LEDRedModesArray.Any()) return;
 
             // populate all dropdowns
-            foreach (var cb in FindControls<ComboBox>(Controls, "cb_ledred"))
+            foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_ledred"))
             {
                 cb.Items.Clear();
                 cb.Items.AddRange(_LEDRedModesArray);
@@ -1945,7 +2063,7 @@ namespace ChameleonMiniGUI
                 if (_modesArray.Any())
                 {
                     // populate all dropdowns
-                    foreach (var cb in FindControls<ComboBox>(Controls, "cb_mode"))
+                    foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_mode"))
                     {
                         cb.Items.Clear();
                         cb.Items.AddRange(_modesArray);
@@ -1961,7 +2079,7 @@ namespace ChameleonMiniGUI
             if (!_lbuttonModesArray.Any()) return;
 
             // populate all dropdowns
-            foreach (var cb in FindControls<ComboBox>(Controls, "cb_Lbutton"))
+            foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_Lbutton"))
             {
                 cb.Items.Clear();
                 cb.Items.AddRange(_lbuttonModesArray);
@@ -1974,7 +2092,7 @@ namespace ChameleonMiniGUI
             if (lbuttonLongModesStr.ToLower().StartsWith("200"))
             {
                 // disable all dropdowns
-                foreach (var cb in FindControls<ComboBox>(Controls, "cb_Lbuttonlong"))
+                foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_Lbuttonlong"))
                 {
                     cb.Items.Clear();
                     cb.Enabled = false;
@@ -1987,7 +2105,7 @@ namespace ChameleonMiniGUI
                 if (!_lbuttonLongModesArray.Any()) return;
 
                 // populate all dropdowns
-                foreach (var cb in FindControls<ComboBox>(Controls, "cb_lbuttonlong"))
+                foreach (var cb in FindControls<ComboBox>(tpOperation.Controls, "cb_lbuttonlong"))
                 {
                     cb.Enabled = true;
                     cb.Items.Clear();
@@ -1998,6 +2116,7 @@ namespace ChameleonMiniGUI
 
         private void GetSupportedModes()
         {
+            SuspendUpdate.Suspend(tpOperation);
             switch (_CurrentDevType)
             {
                 case DeviceType.RevG:
@@ -2007,6 +2126,7 @@ namespace ChameleonMiniGUI
                     SetRevEButtons();
                     break;
             }
+            SuspendUpdate.Resume(tpOperation);
         }
 
         private void GetAvailableCommands()
@@ -2087,19 +2207,20 @@ namespace ChameleonMiniGUI
             SendCommandWithoutResult($"UPLOAD{_cmdExtension}");
 
             var bytes = dump.Data.Concat(dump.Extra).ToArray();
+            
             int numBytesSuccessfullySent = xmodem.Send(bytes);
 
             if (numBytesSuccessfullySent == bytes.Length && xmodem.TerminationReason == XMODEM.TerminationReasonEnum.EndOfFile)
             {
                 var msg = $"[+] File upload ok{Environment.NewLine}";
                 Console.WriteLine(msg);
-                txt_output.Text += msg;
+                txt_output.AppendText(msg);
             }
             else
             {
                 var msg = $"[!] Failed to upload file{Environment.NewLine}";
                 MessageBox.Show(msg);
-                txt_output.Text += msg;
+                txt_output.AppendText(msg);
             }
         }
 
@@ -2116,6 +2237,7 @@ namespace ChameleonMiniGUI
             // by default single UID size
             return 4;
         }
+
         private void IndentifyDumpTypeBySize(DumpData dump)
         {
             switch (dump.Data.Length)
@@ -2171,7 +2293,7 @@ namespace ChameleonMiniGUI
             {
                 var msg = $"[+] File download from device ok{Environment.NewLine}";
                 Console.WriteLine(msg);
-                txt_output.Text += msg;
+                txt_output.AppendText(msg);
 
                 byte[] neededBytes = bytes;
                 byte[] extraBytes = new byte[] { };
@@ -2208,14 +2330,14 @@ namespace ChameleonMiniGUI
 
                 msg = $"[+] File saved to {filename}{Environment.NewLine}";
                 Console.WriteLine(msg);
-                txt_output.Text += msg;
+                txt_output.AppendText(msg);
             }
             else
             {
                 // Something went wrong during the transfer
                 var msg = $"[!] Failed to save dump{Environment.NewLine}";
                 MessageBox.Show(msg);
-                txt_output.Text += msg;
+                txt_output.AppendText(msg);
             }
         }
 
@@ -2254,7 +2376,7 @@ namespace ChameleonMiniGUI
 
             if (!int.TryParse(txt_interval.Text, out tickInterval)) return;
 
-            timer1.Interval = tickInterval > 0 ? tickInterval : 2000;
+            timer1.Interval = tickInterval > 0 ? tickInterval : Default.KeepAliveInterval;
 
             timer1.Start();
         }
@@ -2273,13 +2395,13 @@ namespace ChameleonMiniGUI
                 var dynamicFileByteProvider = hexBox.ByteProvider;
                 dynamicFileByteProvider?.ApplyChanges();
 
-                txt_output.Text += $"[+] Saved file {l?.Text}{Environment.NewLine}";
+                txt_output.AppendText($"[+] Saved file {l?.Text}{Environment.NewLine}");
             }
             catch (Exception)
             {
                 var msg = $"[!] Failed to save file {l?.Text}{Environment.NewLine}";
                 MessageBox.Show(msg);
-                txt_output.Text += msg;
+                txt_output.AppendText(msg);
             }
         }
 
@@ -2289,7 +2411,7 @@ namespace ChameleonMiniGUI
             {
                 var msg = $"[!] Failed to open - File does not exist{Environment.NewLine}";
                 MessageBox.Show(msg);
-                txt_output.Text += msg;
+                txt_output.AppendText(msg);
                 return;
             }
 
@@ -2361,14 +2483,14 @@ namespace ChameleonMiniGUI
                 PerformComparison();
 
                 var msg = $"[!] Loaded '{fi.Name}' {Environment.NewLine}";
-                txt_output.Text += msg;
+                txt_output.AppendText(msg);
             }
             catch (IOException ex) // write mode failed
             {
                 // file cannot be opened
                 var msg = $"[!] Failed to open file{Environment.NewLine}{ex.Message}{Environment.NewLine}";
                 MessageBox.Show(msg);
-                txt_output.Text += msg;
+                txt_output.AppendText(msg);
             }
         }
 
@@ -2408,7 +2530,7 @@ namespace ChameleonMiniGUI
             var l = FindControls<Label>(Controls, $"lbl_hbfilename{hbIdx}").FirstOrDefault();
             if (l != null)
             {
-                txt_output.Text += $"[+] Closed file {l.Text}{Environment.NewLine}";
+                txt_output.AppendText($"[+] Closed file {l.Text}{Environment.NewLine}");
                 l.Text = "N/A";
             }
         }
@@ -2525,34 +2647,34 @@ namespace ChameleonMiniGUI
 
         private void ConfigHMIForRevE()
         {
-            var list = FindControls<ComboBox>(Controls, "cb_Rbutton");
+            var list = FindControls<ComboBox>(tpOperation.Controls, "cb_Rbutton");
             list.ForEach(a => ApplyAll(a, c => { c.Visible = false; }));
 
-            list = FindControls<ComboBox>(Controls, "cb_Lbutton");
+            list = FindControls<ComboBox>(tpOperation.Controls, "cb_Lbutton");
             list.ForEach(a => ApplyAll(a, c =>
             {
                 c.Visible = true;
                 c.Width = REVEDefaultComboWidth;
             }));
 
-            list = FindControls<ComboBox>(Controls, "cb_Rbuttonlong");
+            list = FindControls<ComboBox>(tpOperation.Controls, "cb_Rbuttonlong");
             list.ForEach(a => ApplyAll(a, c => { c.Visible = false; }));
 
-            list = FindControls<ComboBox>(Controls, "cb_Lbuttonlong");
+            list = FindControls<ComboBox>(tpOperation.Controls, "cb_Lbuttonlong");
             list.ForEach(a => ApplyAll(a, c =>
             {
                 c.Visible = true;
                 c.Width = REVEDefaultComboWidth;
             }));
 
-            list = FindControls<ComboBox>(Controls, "cb_ledgreen");
+            list = FindControls<ComboBox>(tpOperation.Controls, "cb_ledgreen");
             list.ForEach(a => ApplyAll(a, c =>
             {
                 c.Visible = false;
                 c.Enabled = false;
             }));
 
-            list = FindControls<ComboBox>(Controls, "cb_ledred");
+            list = FindControls<ComboBox>(tpOperation.Controls, "cb_ledred");
             list.ForEach(a => ApplyAll(a, c =>
             {
                 c.Visible = false;
@@ -2564,7 +2686,7 @@ namespace ChameleonMiniGUI
 
             for (int cidx = 1; cidx < 9; cidx++)
             {
-                var gpbx = (GroupBox) this.Controls.Find($"gb_tagslot{cidx}", true).First();
+                var gpbx = (GroupBox) this.tpOperation.Controls.Find($"gb_tagslot{cidx}", true).First();
                 var pnl = (TableLayoutPanel) gpbx.Controls[$"tableLayoutPanel{cidx}"];
                 pnl.SetColumnSpan(pnl.Controls[$"cb_Lbutton{cidx}"], 2);
                 pnl.SetColumnSpan(pnl.Controls[$"cb_Lbuttonlong{cidx}"], 2);
@@ -2576,42 +2698,42 @@ namespace ChameleonMiniGUI
 
         private void ConfigHMIForRevG()
         {
-            var list = FindControls<ComboBox>(Controls, "cb_Rbutton");
+            var list = FindControls<ComboBox>(tpOperation.Controls, "cb_Rbutton");
             list.ForEach(a => ApplyAll(a, c =>
             {
                 c.Visible = true;
                 c.Width = REVGDefaultComboWidth;
             }));
 
-            list = FindControls<ComboBox>(Controls, "cb_Lbutton");
+            list = FindControls<ComboBox>(tpOperation.Controls, "cb_Lbutton");
             list.ForEach(a => ApplyAll(a, c =>
             {
                 c.Visible = true;
                 c.Width = REVGDefaultComboWidth;
             }));
 
-            list = FindControls<ComboBox>(Controls, "cb_Rbuttonlong");
+            list = FindControls<ComboBox>(tpOperation.Controls, "cb_Rbuttonlong");
             list.ForEach(a => ApplyAll(a, c =>
             {
                 c.Visible = true;
                 c.Width = REVGDefaultComboWidth;
             }));
 
-            list = FindControls<ComboBox>(Controls, "cb_Lbuttonlong");
+            list = FindControls<ComboBox>(tpOperation.Controls, "cb_Lbuttonlong");
             list.ForEach(a => ApplyAll(a, c =>
             {
                 c.Visible = true;
                 c.Width = REVGDefaultComboWidth;
             }));
 
-            list = FindControls<ComboBox>(Controls, "cb_ledgreen");
+            list = FindControls<ComboBox>(tpOperation.Controls, "cb_ledgreen");
             list.ForEach(a => ApplyAll(a, c =>
             {
                 c.Visible = true;
                 c.Enabled = true;
             }));
 
-            list = FindControls<ComboBox>(Controls, "cb_ledred");
+            list = FindControls<ComboBox>(tpOperation.Controls, "cb_ledred");
             list.ForEach(a => ApplyAll(a, c =>
             {
                 c.Visible = true;
@@ -2623,7 +2745,7 @@ namespace ChameleonMiniGUI
 
             for (int cidx = 1; cidx < 9; cidx++)
             {
-                var gpbx = (GroupBox) this.Controls.Find($"gb_tagslot{cidx}", true).First();
+                var gpbx = (GroupBox) this.tpOperation.Controls.Find($"gb_tagslot{cidx}", true).First();
                 var pnl = (TableLayoutPanel) gpbx.Controls[$"tableLayoutPanel{cidx}"];
                 pnl.SetColumnSpan(pnl.Controls[$"cb_Lbutton{cidx}"], 1);
                 pnl.SetColumnSpan(pnl.Controls[$"cb_Lbuttonlong{cidx}"], 1);
@@ -2635,7 +2757,7 @@ namespace ChameleonMiniGUI
 
         private void HighlightActiveSlot()
         {
-            foreach (var gb in FindControls<GroupBoxEnhanced>(Controls, "gb_tagslot"))
+            foreach (var gb in FindControls<GroupBoxEnhanced>(tpOperation.Controls, "gb_tagslot"))
             {
                 var tagslotIndex = int.Parse(gb.Name.Substring(gb.Name.Length - 1));
                 if (tagslotIndex <= 0) continue;
@@ -2704,7 +2826,7 @@ namespace ChameleonMiniGUI
             }
             DeviceDisconnected();
         }
-
         #endregion
+
     }
 }

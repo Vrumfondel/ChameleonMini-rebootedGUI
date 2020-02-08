@@ -273,6 +273,7 @@ namespace ChameleonMiniGUI
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.openFileDialog2 = new System.Windows.Forms.OpenFileDialog();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.tsmi_selectall = new System.Windows.Forms.ToolStripMenuItem();
             this.gb_output.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.bsLanguages)).BeginInit();
             this.tpSettings.SuspendLayout();
@@ -322,6 +323,7 @@ namespace ChameleonMiniGUI
             this.txt_output.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.txt_output.Size = new System.Drawing.Size(1277, 150);
             this.txt_output.TabIndex = 6;
+            this.txt_output.VisibleChanged += new System.EventHandler(this.txt_output_VisibleChanged);
             // 
             // openFileDialog1
             // 
@@ -534,19 +536,18 @@ namespace ChameleonMiniGUI
             this.lbl_defaults.AutoSize = true;
             this.lbl_defaults.Location = new System.Drawing.Point(245, 95);
             this.lbl_defaults.Name = "lbl_defaults";
-            this.lbl_defaults.Size = new System.Drawing.Size(472, 13);
+            this.lbl_defaults.Size = new System.Drawing.Size(397, 13);
             this.lbl_defaults.TabIndex = 10;
-            this.lbl_defaults.Text = "Flashes the stock firmware of the ChameleonMini RevE rebooted. Needs to be in boo" +
-    "tloader mode.";
+            this.lbl_defaults.Text = "Flashes the stock firmware of the ChameleonMini. Needs to be in bootloader mode.";
             // 
             // lbl_reset
             // 
             this.lbl_reset.AutoSize = true;
             this.lbl_reset.Location = new System.Drawing.Point(245, 37);
             this.lbl_reset.Name = "lbl_reset";
-            this.lbl_reset.Size = new System.Drawing.Size(331, 13);
+            this.lbl_reset.Size = new System.Drawing.Size(350, 13);
             this.lbl_reset.TabIndex = 9;
-            this.lbl_reset.Text = "Reboots the Chameleon, i.e., power down and subsequent power-up";
+            this.lbl_reset.Text = "Reboots the ChameleonMini, i.e., power down and subsequent power-up";
             // 
             // btn_reset
             // 
@@ -564,9 +565,9 @@ namespace ChameleonMiniGUI
             this.lbl_upgrade.AutoSize = true;
             this.lbl_upgrade.Location = new System.Drawing.Point(245, 66);
             this.lbl_upgrade.Name = "lbl_upgrade";
-            this.lbl_upgrade.Size = new System.Drawing.Size(266, 13);
+            this.lbl_upgrade.Size = new System.Drawing.Size(285, 13);
             this.lbl_upgrade.TabIndex = 7;
-            this.lbl_upgrade.Text = "Sets the Chameleon into firmware upgrade mode (DFU)";
+            this.lbl_upgrade.Text = "Sets the ChameleonMini into firmware upgrade mode (DFU)";
             // 
             // btn_bootmode
             // 
@@ -843,7 +844,7 @@ namespace ChameleonMiniGUI
             // 
             this.btn_selectnone.AutoSize = true;
             this.btn_selectnone.Enabled = false;
-            this.btn_selectnone.Location = new System.Drawing.Point(110, 24);
+            this.btn_selectnone.Location = new System.Drawing.Point(110, 20);
             this.btn_selectnone.Name = "btn_selectnone";
             this.btn_selectnone.Size = new System.Drawing.Size(106, 30);
             this.btn_selectnone.TabIndex = 10;
@@ -855,7 +856,7 @@ namespace ChameleonMiniGUI
             // 
             this.btn_selectall.AutoSize = true;
             this.btn_selectall.Enabled = false;
-            this.btn_selectall.Location = new System.Drawing.Point(9, 24);
+            this.btn_selectall.Location = new System.Drawing.Point(9, 20);
             this.btn_selectall.Name = "btn_selectall";
             this.btn_selectall.Size = new System.Drawing.Size(95, 30);
             this.btn_selectall.TabIndex = 9;
@@ -986,6 +987,7 @@ namespace ChameleonMiniGUI
             // cb_Rbuttonlong6
             // 
             this.cb_Rbuttonlong6.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbuttonlong6.DropDownWidth = 160;
             this.cb_Rbuttonlong6.FormattingEnabled = true;
             this.cb_Rbuttonlong6.Items.AddRange(new object[] {
             "NONE",
@@ -1035,6 +1037,7 @@ namespace ChameleonMiniGUI
             // cb_Rbutton6
             // 
             this.cb_Rbutton6.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbutton6.DropDownWidth = 160;
             this.cb_Rbutton6.FormattingEnabled = true;
             this.cb_Rbutton6.Items.AddRange(new object[] {
             "NONE",
@@ -1139,6 +1142,7 @@ namespace ChameleonMiniGUI
             // cb_Lbuttonlong6
             // 
             this.cb_Lbuttonlong6.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbuttonlong6.DropDownWidth = 160;
             this.cb_Lbuttonlong6.FormattingEnabled = true;
             this.cb_Lbuttonlong6.Items.AddRange(new object[] {
             "NONE",
@@ -1179,6 +1183,7 @@ namespace ChameleonMiniGUI
             // cb_Lbutton6
             // 
             this.cb_Lbutton6.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbutton6.DropDownWidth = 160;
             this.cb_Lbutton6.FormattingEnabled = true;
             this.cb_Lbutton6.Items.AddRange(new object[] {
             "NONE",
@@ -1351,6 +1356,7 @@ namespace ChameleonMiniGUI
             // cb_Rbuttonlong1
             // 
             this.cb_Rbuttonlong1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbuttonlong1.DropDownWidth = 160;
             this.cb_Rbuttonlong1.FormattingEnabled = true;
             this.cb_Rbuttonlong1.Items.AddRange(new object[] {
             "NONE",
@@ -1373,6 +1379,7 @@ namespace ChameleonMiniGUI
             // cb_Lbuttonlong1
             // 
             this.cb_Lbuttonlong1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbuttonlong1.DropDownWidth = 160;
             this.cb_Lbuttonlong1.FormattingEnabled = true;
             this.cb_Lbuttonlong1.Items.AddRange(new object[] {
             "NONE",
@@ -1404,6 +1411,7 @@ namespace ChameleonMiniGUI
             // cb_Rbutton1
             // 
             this.cb_Rbutton1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbutton1.DropDownWidth = 160;
             this.cb_Rbutton1.FormattingEnabled = true;
             this.cb_Rbutton1.Items.AddRange(new object[] {
             "NONE",
@@ -1426,6 +1434,7 @@ namespace ChameleonMiniGUI
             // cb_Lbutton1
             // 
             this.cb_Lbutton1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbutton1.DropDownWidth = 160;
             this.cb_Lbutton1.FormattingEnabled = true;
             this.cb_Lbutton1.Items.AddRange(new object[] {
             "NONE",
@@ -1571,6 +1580,7 @@ namespace ChameleonMiniGUI
             // cb_Rbuttonlong2
             // 
             this.cb_Rbuttonlong2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbuttonlong2.DropDownWidth = 160;
             this.cb_Rbuttonlong2.FormattingEnabled = true;
             this.cb_Rbuttonlong2.Items.AddRange(new object[] {
             "NONE",
@@ -1612,6 +1622,7 @@ namespace ChameleonMiniGUI
             // cb_Rbutton2
             // 
             this.cb_Rbutton2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbutton2.DropDownWidth = 160;
             this.cb_Rbutton2.FormattingEnabled = true;
             this.cb_Rbutton2.Items.AddRange(new object[] {
             "NONE",
@@ -1653,6 +1664,7 @@ namespace ChameleonMiniGUI
             // cb_Lbutton2
             // 
             this.cb_Lbutton2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbutton2.DropDownWidth = 160;
             this.cb_Lbutton2.FormattingEnabled = true;
             this.cb_Lbutton2.Items.AddRange(new object[] {
             "NONE",
@@ -1675,6 +1687,7 @@ namespace ChameleonMiniGUI
             // cb_Lbuttonlong2
             // 
             this.cb_Lbuttonlong2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbuttonlong2.DropDownWidth = 160;
             this.cb_Lbuttonlong2.FormattingEnabled = true;
             this.cb_Lbuttonlong2.Items.AddRange(new object[] {
             "NONE",
@@ -1847,6 +1860,7 @@ namespace ChameleonMiniGUI
             // cb_Rbuttonlong4
             // 
             this.cb_Rbuttonlong4.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbuttonlong4.DropDownWidth = 160;
             this.cb_Rbuttonlong4.FormattingEnabled = true;
             this.cb_Rbuttonlong4.Items.AddRange(new object[] {
             "NONE",
@@ -1888,6 +1902,7 @@ namespace ChameleonMiniGUI
             // cb_Rbutton4
             // 
             this.cb_Rbutton4.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbutton4.DropDownWidth = 160;
             this.cb_Rbutton4.FormattingEnabled = true;
             this.cb_Rbutton4.Items.AddRange(new object[] {
             "NONE",
@@ -1974,6 +1989,7 @@ namespace ChameleonMiniGUI
             // cb_Lbuttonlong4
             // 
             this.cb_Lbuttonlong4.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbuttonlong4.DropDownWidth = 160;
             this.cb_Lbuttonlong4.FormattingEnabled = true;
             this.cb_Lbuttonlong4.Items.AddRange(new object[] {
             "NONE",
@@ -2014,6 +2030,7 @@ namespace ChameleonMiniGUI
             // cb_Lbutton4
             // 
             this.cb_Lbutton4.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbutton4.DropDownWidth = 160;
             this.cb_Lbutton4.FormattingEnabled = true;
             this.cb_Lbutton4.Items.AddRange(new object[] {
             "NONE",
@@ -2123,6 +2140,7 @@ namespace ChameleonMiniGUI
             // cb_Rbuttonlong3
             // 
             this.cb_Rbuttonlong3.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbuttonlong3.DropDownWidth = 160;
             this.cb_Rbuttonlong3.FormattingEnabled = true;
             this.cb_Rbuttonlong3.Items.AddRange(new object[] {
             "NONE",
@@ -2164,6 +2182,7 @@ namespace ChameleonMiniGUI
             // cb_Rbutton3
             // 
             this.cb_Rbutton3.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbutton3.DropDownWidth = 160;
             this.cb_Rbutton3.FormattingEnabled = true;
             this.cb_Rbutton3.Items.AddRange(new object[] {
             "NONE",
@@ -2250,6 +2269,7 @@ namespace ChameleonMiniGUI
             // cb_Lbuttonlong3
             // 
             this.cb_Lbuttonlong3.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbuttonlong3.DropDownWidth = 160;
             this.cb_Lbuttonlong3.FormattingEnabled = true;
             this.cb_Lbuttonlong3.Items.AddRange(new object[] {
             "NONE",
@@ -2290,6 +2310,7 @@ namespace ChameleonMiniGUI
             // cb_Lbutton3
             // 
             this.cb_Lbutton3.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbutton3.DropDownWidth = 160;
             this.cb_Lbutton3.FormattingEnabled = true;
             this.cb_Lbutton3.Items.AddRange(new object[] {
             "NONE",
@@ -2399,6 +2420,7 @@ namespace ChameleonMiniGUI
             // cb_Rbuttonlong5
             // 
             this.cb_Rbuttonlong5.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbuttonlong5.DropDownWidth = 160;
             this.cb_Rbuttonlong5.FormattingEnabled = true;
             this.cb_Rbuttonlong5.Items.AddRange(new object[] {
             "NONE",
@@ -2440,6 +2462,7 @@ namespace ChameleonMiniGUI
             // cb_Rbutton5
             // 
             this.cb_Rbutton5.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbutton5.DropDownWidth = 160;
             this.cb_Rbutton5.FormattingEnabled = true;
             this.cb_Rbutton5.Items.AddRange(new object[] {
             "NONE",
@@ -2526,6 +2549,7 @@ namespace ChameleonMiniGUI
             // cb_Lbuttonlong5
             // 
             this.cb_Lbuttonlong5.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbuttonlong5.DropDownWidth = 160;
             this.cb_Lbuttonlong5.FormattingEnabled = true;
             this.cb_Lbuttonlong5.Items.AddRange(new object[] {
             "NONE",
@@ -2566,6 +2590,7 @@ namespace ChameleonMiniGUI
             // cb_Lbutton5
             // 
             this.cb_Lbutton5.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbutton5.DropDownWidth = 160;
             this.cb_Lbutton5.FormattingEnabled = true;
             this.cb_Lbutton5.Items.AddRange(new object[] {
             "NONE",
@@ -2675,6 +2700,7 @@ namespace ChameleonMiniGUI
             // cb_Rbuttonlong7
             // 
             this.cb_Rbuttonlong7.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbuttonlong7.DropDownWidth = 160;
             this.cb_Rbuttonlong7.FormattingEnabled = true;
             this.cb_Rbuttonlong7.Items.AddRange(new object[] {
             "NONE",
@@ -2716,6 +2742,7 @@ namespace ChameleonMiniGUI
             // cb_Rbutton7
             // 
             this.cb_Rbutton7.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbutton7.DropDownWidth = 160;
             this.cb_Rbutton7.FormattingEnabled = true;
             this.cb_Rbutton7.Items.AddRange(new object[] {
             "NONE",
@@ -2802,6 +2829,7 @@ namespace ChameleonMiniGUI
             // cb_Lbuttonlong7
             // 
             this.cb_Lbuttonlong7.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbuttonlong7.DropDownWidth = 160;
             this.cb_Lbuttonlong7.FormattingEnabled = true;
             this.cb_Lbuttonlong7.Items.AddRange(new object[] {
             "NONE",
@@ -2842,6 +2870,7 @@ namespace ChameleonMiniGUI
             // cb_Lbutton7
             // 
             this.cb_Lbutton7.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbutton7.DropDownWidth = 160;
             this.cb_Lbutton7.FormattingEnabled = true;
             this.cb_Lbutton7.Items.AddRange(new object[] {
             "NONE",
@@ -2951,6 +2980,7 @@ namespace ChameleonMiniGUI
             // cb_Rbuttonlong8
             // 
             this.cb_Rbuttonlong8.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbuttonlong8.DropDownWidth = 160;
             this.cb_Rbuttonlong8.FormattingEnabled = true;
             this.cb_Rbuttonlong8.Items.AddRange(new object[] {
             "NONE",
@@ -2992,6 +3022,7 @@ namespace ChameleonMiniGUI
             // cb_Rbutton8
             // 
             this.cb_Rbutton8.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Rbutton8.DropDownWidth = 160;
             this.cb_Rbutton8.FormattingEnabled = true;
             this.cb_Rbutton8.Items.AddRange(new object[] {
             "NONE",
@@ -3078,6 +3109,7 @@ namespace ChameleonMiniGUI
             // cb_Lbuttonlong8
             // 
             this.cb_Lbuttonlong8.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbuttonlong8.DropDownWidth = 160;
             this.cb_Lbuttonlong8.FormattingEnabled = true;
             this.cb_Lbuttonlong8.Items.AddRange(new object[] {
             "NONE",
@@ -3118,6 +3150,7 @@ namespace ChameleonMiniGUI
             // cb_Lbutton8
             // 
             this.cb_Lbutton8.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cb_Lbutton8.DropDownWidth = 160;
             this.cb_Lbutton8.FormattingEnabled = true;
             this.cb_Lbutton8.Items.AddRange(new object[] {
             "NONE",
@@ -3216,19 +3249,19 @@ namespace ChameleonMiniGUI
             this.toolStripMenuItem1,
             this.toolStripMenuItem2});
             this.menuScroll.Name = "menuScroll";
-            this.menuScroll.Size = new System.Drawing.Size(171, 48);
+            this.menuScroll.Size = new System.Drawing.Size(170, 48);
             this.menuScroll.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.menuScroll_ItemClicked);
             // 
             // toolStripMenuItem1
             // 
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(170, 22);
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(169, 22);
             this.toolStripMenuItem1.Text = "Toggle Sync Scroll";
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(170, 22);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(169, 22);
             this.toolStripMenuItem2.Text = "Close Files";
             // 
             // ucLegend1
@@ -3587,45 +3620,53 @@ namespace ChameleonMiniGUI
             // 
             this.menuClear.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.menuClear.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmi_selectall,
             this.tsmi_clear,
             this.tsmi_copy});
             this.menuClear.Name = "menuClear";
-            this.menuClear.Size = new System.Drawing.Size(103, 48);
+            this.menuClear.Size = new System.Drawing.Size(181, 92);
             this.menuClear.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.menuClear_ItemClicked);
             // 
             // tsmi_clear
             // 
             this.tsmi_clear.Name = "tsmi_clear";
-            this.tsmi_clear.Size = new System.Drawing.Size(102, 22);
+            this.tsmi_clear.Size = new System.Drawing.Size(180, 22);
             this.tsmi_clear.Text = "Clear";
             // 
             // tsmi_copy
             // 
             this.tsmi_copy.Name = "tsmi_copy";
-            this.tsmi_copy.Size = new System.Drawing.Size(102, 22);
+            this.tsmi_copy.Size = new System.Drawing.Size(180, 22);
             this.tsmi_copy.Text = "Copy";
             // 
             // openFileDialog2
             // 
             this.openFileDialog2.FileName = "openFileDialog2";
             // 
+            // tsmi_selectall
+            // 
+            this.tsmi_selectall.Name = "tsmi_selectall";
+            this.tsmi_selectall.Size = new System.Drawing.Size(180, 22);
+            this.tsmi_selectall.Text = "Select All";
+            // 
             // frm_main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoScroll = true;
-            this.ClientSize = new System.Drawing.Size(1302, 890);
+            this.ClientSize = new System.Drawing.Size(1301, 889);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.gb_output);
+            this.DoubleBuffered = true;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
-            this.MaximumSize = new System.Drawing.Size(1318, 929);
+            this.MaximumSize = new System.Drawing.Size(1317, 928);
             this.Name = "frm_main";
             this.Activated += new System.EventHandler(this.frm_main_Activated);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.frm_main_FormClosed);
             this.Load += new System.EventHandler(this.frm_main_Load);
+            this.ResizeBegin += new System.EventHandler(this.frm_main_ResizeBegin);
             this.ResizeEnd += new System.EventHandler(this.frm_main_ResizeEnd);
-            this.Move += new System.EventHandler(this.frm_main_Move);
             this.gb_output.ResumeLayout(false);
             this.gb_output.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.bsLanguages)).EndInit();
@@ -3931,5 +3972,6 @@ namespace ChameleonMiniGUI
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel6;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel7;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel8;
+        private System.Windows.Forms.ToolStripMenuItem tsmi_selectall;
     }
 }

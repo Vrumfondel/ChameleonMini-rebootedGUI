@@ -4,6 +4,28 @@ This project uses the changelog in accordance with [keepchangelog](http://keepac
 
 ## [unreleased]
 
+## [1.2.2.1] - 2019-12-23
+- tab serial: select all text option  (@grspy)
+
+## [1.2.2] - 2019-12-20
+- Smooth updaste of slot graphics (@iceman)
+
+## [1.2.1.10] - 2019-12-17
+- speedups (@grspy)
+- log textbox scrolls to end when appending. (@grspy , @iceman)
+
+## [1.2.1.9] - 2019-12-11
+- Increase default "keep alive" setting to 10sec (@grspy)
+
+## [1.2.1.8] - 2019-12-11
+- Download / saving dump now uses unique naming. aka.  uid_{counter}.bin format (@grspy)
+
+## [1.2.1.7] - 2019-12-09
+- Upload one dump to several slots  (@grspy)
+
+## [1.2.1.6] - 2019-12-03
+- Annotate RevG log output  (@grspy)
+
 ## [1.2.1.4] - 2019-11-11
 - New logo and icons  (@grspy)
 
